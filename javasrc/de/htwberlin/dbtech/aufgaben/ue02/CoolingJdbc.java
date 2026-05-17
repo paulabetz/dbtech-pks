@@ -3,6 +3,7 @@ package de.htwberlin.dbtech.aufgaben.ue02;
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import de.htwberlin.dbtech.exceptions.CoolingSystemException;
@@ -70,13 +71,14 @@ public class CoolingJdbc implements ICoolingJdbc {
                     L.info("findSampleById: found {}", sample);
                     return sample;
                 }
+                throw new CoolingSystemException("Sample not found: " + sampleId);
             }
 
+        } catch (CoolingSystemException e) {
+            throw e; // durchreichen, nicht als DataException wrappen!
         } catch (SQLException e) {
             throw new DataException("findSampleById failed", e);
         }
-
-        throw new CoolingSystemException("Sample not found: " + sampleId);
     }
 
 
@@ -95,6 +97,8 @@ public class CoolingJdbc implements ICoolingJdbc {
                 }
                 validNoOfDays = rs.getInt("ValidNoOfDays");
             }
+        } catch (CoolingSystemException e) {
+            throw e;
         } catch (SQLException e) {
             throw new DataException("createSample: SampleKind lookup failed", e);
         }
@@ -108,6 +112,8 @@ public class CoolingJdbc implements ICoolingJdbc {
                     throw new CoolingSystemException("SampleId already exists: " + sampleId);
                 }
             }
+        } catch (CoolingSystemException e) {
+            throw e;
         } catch (SQLException e) {
             throw new DataException("createSample: duplicate check failed", e);
         }
@@ -121,7 +127,6 @@ public class CoolingJdbc implements ICoolingJdbc {
             ps.setDate(3, Date.valueOf(expirationDate));
             int rows = ps.executeUpdate();
             L.info("createSample: {} row(s) inserted, expirationDate: {}", rows, expirationDate);
-
         } catch (SQLException e) {
             throw new DataException("createSample: insert failed", e);
         }
@@ -181,6 +186,9 @@ public class CoolingJdbc implements ICoolingJdbc {
             }
             ps.executeBatch();
             L.info("clearTray: {} sample(s) removed from tray {}", sampleIds.size(), trayId);
+        } catch (BatchUpdateException e) {
+            throw new DataException("clearTray: batch delete failed, counts: "
+                    + Arrays.toString(e.getUpdateCounts()), e);
         } catch (SQLException e) {
             throw new DataException("clearTray: Sample delete failed", e);
         }
