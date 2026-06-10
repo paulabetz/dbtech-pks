@@ -75,7 +75,7 @@ public class CoolingJdbc implements ICoolingJdbc {
             }
 
         } catch (CoolingSystemException e) {
-            throw e; // durchreichen, nicht als DataException wrappen!
+            throw e;
         } catch (SQLException e) {
             throw new DataException("findSampleById failed", e);
         }
